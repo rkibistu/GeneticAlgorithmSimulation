@@ -24,6 +24,6 @@ class Food(pygame.sprite.Sprite):
         self.rect.center = [self.x, self.y]
         self.energy = 1
 
-    # DRAW
+    # Draw
     def draw(self, screen):
         screen.blit(self.scaledImage, self.rect)

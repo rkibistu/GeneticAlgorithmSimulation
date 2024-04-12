@@ -31,33 +31,33 @@ class Entity(pygame.sprite.Sprite):
 
         self.name = name
 
-    # NEURAL NETWORK
+    # retea neuronala simpla
     def think(self):
 
-        # SIMPLE MLP
+        # mlp
         af = lambda x: np.tanh(x)               # activation function
         h1 = af(np.dot(self.wih, self.r_food))  # hidden layer
         out = af(np.dot(self.who, h1))          # output layer
 
-        # UPDATE dv AND dr WITH MLP RESPONSE
+        # update based on mlp response
         self.nn_dv = float(out[0])   # [-1, 1]  (accelerate=1, deaccelerate=-1)
         self.nn_dr = float(out[1])   # [-1, 1]  (left=1, right=-1)
 
 
-    # UPDATE HEADING
+    # update heading (rotation)
     def update_r(self, settings):
         self.r += self.nn_dr * settings['dr_max'] * settings['dt']
         self.r = self.r % 360
 
 
-    # UPDATE VELOCITY
+    # update velocity
     def update_vel(self, settings):
         self.v += self.nn_dv * settings['dv_max'] * settings['dt']
         if self.v < 0: self.v = 0
         if self.v > settings['v_max']: self.v = settings['v_max']
 
 
-    # UPDATE POSITION
+    # update position
     def update_pos(self, settings):
         dx = self.v * math.cos(math.radians(self.r)) * settings['dt']
         dy = self.v * math.sin(math.radians(self.r)) * settings['dt']
@@ -65,6 +65,6 @@ class Entity(pygame.sprite.Sprite):
         self.y += dy
         self.rect.center = [self.x, self.y]
 
-    # DRAW
+    # draw
     def draw(self, screen):
         screen.blit(self.scaledImage, self.rect)

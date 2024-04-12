@@ -10,6 +10,7 @@ from math import sqrt
 from collections import defaultdict
 import numpy as np
 import operator
+import sys
 
 
 from entity import Entity
@@ -19,6 +20,19 @@ import evolutionSettings as settings
 WIDTH = 1280
 HEIGHT = 720
 BACKGROUND = (0, 0, 0)
+
+# some good values saved
+GOOD_WIH = [
+    -0.51089986,
+    -0.26583297,
+    -0.97804446,
+    -0.10858291,
+    -0.69969082,
+]
+GOOD_WHO = [
+    [0.66994817, -0.55868148, 0.24482176, 0.4597497, 0.31503457],
+    [0.16009314, -0.08497293, -0.60829999, -0.69862888, -0.13360536]
+]
 
 def dist(x1,y1,x2,y2):
     return sqrt((x2-x1)**2 + (y2-y1)**2)
@@ -46,11 +60,13 @@ def evolve(settings, organisms_old, gen):
     elitism_num = int(floor(settings['elitism'] * settings['pop_size']))
     new_orgs = settings['pop_size'] - elitism_num
 
-    #--- GET STATS FROM CURRENT GENERATION ----------------+
+    # Get current generation stats
     stats = defaultdict(int)
     for org in organisms_old:
         if org.fitness > stats['BEST'] or stats['BEST'] == 0:
             stats['BEST'] = org.fitness
+            stats['BEST-WIH'] = org.wih
+            stats['BEST-WHO'] = org.who
 
         if org.fitness < stats['WORST'] or stats['WORST'] == 0:
             stats['WORST'] = org.fitness
@@ -61,42 +77,41 @@ def evolve(settings, organisms_old, gen):
     stats['AVG'] = stats['SUM'] / stats['COUNT']
 
 
-    #--- ELITISM (KEEP BEST PERFORMING ORGANISMS) ---------+
+    # elitism
     orgs_sorted = sorted(organisms_old, key=operator.attrgetter('fitness'), reverse=True)
     organisms_new = []
     for i in range(0, elitism_num):
         organisms_new.append(Entity(settings, wih=orgs_sorted[i].wih, who=orgs_sorted[i].who, name=orgs_sorted[i].name))
 
 
-    #--- GENERATE NEW ORGANISMS ---------------------------+
+    # Generate new organisms
     for w in range(0, new_orgs):
 
-        # SELECTION (TRUNCATION SELECTION)
+        # select candidates
         canidates = range(0, elitism_num)
         random_index = random.sample(canidates, 2)
         org_1 = orgs_sorted[random_index[0]]
         org_2 = orgs_sorted[random_index[1]]
 
-        # CROSSOVER
+        # crossover
         crossover_weight = random.random()
         wih_new = (crossover_weight * org_1.wih) + ((1 - crossover_weight) * org_2.wih)
         who_new = (crossover_weight * org_1.who) + ((1 - crossover_weight) * org_2.who)
 
-        # MUTATION
+        # Mutate
         mutate = random.random()
         if mutate <= settings['mutate']:
 
-            # PICK WHICH WEIGHT MATRIX TO MUTATE
             mat_pick = random.randint(0,1)
 
-            # MUTATE: WIH WEIGHTS
+            # mutate WIH weights
             if mat_pick == 0:
                 index_row = random.randint(0,settings['hnodes']-1)
                 wih_new[index_row] = wih_new[index_row] * random.uniform(0.9, 1.1)
                 if wih_new[index_row] >  1: wih_new[index_row] = 1
                 if wih_new[index_row] < -1: wih_new[index_row] = -1
 
-            # MUTATE: WHO WEIGHTS
+            # mutate WHO weights
             if mat_pick == 1:
                 index_row = random.randint(0,settings['onodes']-1)
                 index_col = random.randint(0,settings['hnodes']-1)
@@ -108,52 +123,51 @@ def evolve(settings, organisms_old, gen):
 
     return organisms_new, stats
 
+def handle_events():
+  for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
 def simulate(settings, organisms, foods, gen, screen):
 
     total_time_steps = int(settings['gen_time'] / settings['dt'])
 
-    #--- CYCLE THROUGH EACH TIME STEP ---------------------+
+    # simulation loop
     for t_step in range(0, total_time_steps, 1):
 
-        # PLOT SIMULATION FRAME
-        if settings['plot']==True and gen==settings['gens']-1:
-            #plot_frame(settings, organisms, foods, gen, t_step)
-            pass
+        handle_events()
 
         draw_game(settings,organisms,foods,gen,t_step, screen)
-        #plot_frame(settings, organisms, foods, gen, t_step)
 
-        # UPDATE FITNESS FUNCTION
+        # update fitness function
         for food in foods:
             for org in organisms:
                 food_org_dist = dist(org.x, org.y, food.x, food.y)
 
-                # UPDATE FITNESS FUNCTION
-                if food_org_dist <= 0.075:
+                # if organism is close enough to the food -> eat it
+                if food_org_dist <= 0.75:
                     org.fitness += food.energy
                     food.respawn(settings)
 
-                # RESET DISTANCE AND HEADING TO NEAREST FOOD SOURCE
+                # reset values so they will be calcualted again
                 org.d_food = 100
                 org.r_food = 0
 
-        # CALCULATE HEADING TO NEAREST FOOD SOURCE
+        # calcilate heading to closest food
         for food in foods:
             for org in organisms:
 
-                # CALCULATE DISTANCE TO SELECTED FOOD PARTICLE
                 food_org_dist = dist(org.x, org.y, food.x, food.y)
-
-                # DETERMINE IF THIS IS THE CLOSEST FOOD PARTICLE
                 if food_org_dist < org.d_food:
                     org.d_food = food_org_dist
                     org.r_food = calc_heading(org, food)
 
-        # GET ORGANISM RESPONSE
+        # update internal values using neuronal network
         for org in organisms:
             org.think()
 
-        # UPDATE ORGANISMS POSITION AND VELOCITY
+        # update position and velocity
         for org in organisms:
             org.update_r(settings)
             org.update_vel(settings)
@@ -168,36 +182,30 @@ def main():
 
     print(Entity.__dir__)
 
-    #--- POPULATE THE ENVIRONMENT WITH FOOD ---------------+
+    # spawn food
     foods = []
     for i in range(0,settings.settings['food_num']):
         foods.append(Food(settings.settings))
 
-    #--- POPULATE THE ENVIRONMENT WITH ORGANISMS ----------+
+    # dpawn organisms
     organisms = []
     for i in range(0,settings.settings['pop_size']):
         wih_init = np.random.uniform(-1, 1, (settings.settings['hnodes'], settings.settings['inodes']))     # mlp weights (input -> hidden)
         who_init = np.random.uniform(-1, 1, (settings.settings['onodes'], settings.settings['hnodes']))     # mlp weights (hidden -> output)
 
+        wih_init = np.array(GOOD_WIH)
+        who_init = np.array(GOOD_WHO)
         organisms.append(Entity(settings.settings, wih_init, who_init, name='gen[x]-org['+str(i)+']'))
 
-    #--- CYCLE THROUGH EACH GENERATION --------------------+
+    # generations loop
     for gen in range(0, settings.settings['gens']):
 
-        # SIMULATE
         organisms = simulate(settings.settings, organisms, foods, gen, screen)
 
-        # EVOLVE
         organisms, stats = evolve(settings.settings, organisms, gen)
         print('> GEN:',gen,'BEST:',stats['BEST'],'AVG:',stats['AVG'],'WORST:',stats['WORST'])
-
-
-    # while True:
-    #     pygame.event.pump()
-       
-    #     pygame.display.flip()
-
-    #     clock.tick(60)
+        print('> WIH: ', stats['BEST-WIH'])
+        print('> WHO: ', stats['BEST-WHO'])
 
 if __name__ == "__main__":
     main()
