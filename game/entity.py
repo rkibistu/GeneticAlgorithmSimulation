@@ -74,9 +74,16 @@ class Entity(pygame.sprite.Sprite):
         self.update_r(settings.settings)
         self.update_pos(settings.settings)
 
+    def set_color(self, surface, color):
+        rect = surface.get_rect()
+        surf = pygame.Surface(rect.size, pygame.SRCALPHA)
+        surf.fill(color)
+        return surf
+
     # draw
     def draw(self, screen):
-        screen.blit(self.scaledImage, self.rect)
+        a = self.set_color(self.scaledImage,[self.v * 25,0,155])
+        screen.blit(a, self.rect)
 
     # iterates foods array and eat the one close enough
     def try_eat(self, foods):
