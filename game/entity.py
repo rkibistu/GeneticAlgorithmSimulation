@@ -8,7 +8,7 @@ from food import Food
 import evolutionSettings as settings
 
 class Entity(pygame.sprite.Sprite):
-    def __init__(self, settings, wih=None, who=None, name=None):
+    def __init__(self, settings, wih=None, who=None, name=None, velocity=None):
         super().__init__()
 
         self.image = pygame.image.load("Sprites/triangle.png")
@@ -29,13 +29,20 @@ class Entity(pygame.sprite.Sprite):
         self.rect.center = [self.x, self.y]
 
         self.r = random.uniform(0,360)                 # orientation   [0, 360]
-        self.v = random.uniform(0,settings['v_max'])   # velocity      [0, v_max]
+        if(velocity == None):
+            self.v = random.uniform(settings['v_min'],settings['v_max'])   # velocity      [0, v_max]
+        else:
+            self.v = velocity
         self.dv = random.uniform(-settings['dv_max'], settings['dv_max'])   # dv
 
         self.d_food_max = 100 # max distance it can detects food
         self.d_food = 100   # distance to nearest food
         self.r_food = 0     # orientation to nearest food
         self.fitness = 0    # fitness (food count)
+
+        self.food_to_reproduce = 2  # food count to reproduce
+        self.food_to_live = 1       # food count to live
+        self.finishedWork = 0
 
         self.wih = wih
         self.who = who
@@ -76,11 +83,32 @@ class Entity(pygame.sprite.Sprite):
         self.rect.center = [self.x, self.y]
 
     def update(self, foods):
-        self.try_eat(foods)
         self.calc_heading(foods)
         self.think()
         self.update_r(settings.settings)
         self.update_pos(settings.settings)
+        self.try_eat(foods)
+        self.try_mark_back_home()
+
+    def reset(self):
+        self.x,self.y = generate_pos_on_box_margins(
+            settings.settings["x_min"], 
+            settings.settings["y_min"], 
+            settings.settings["x_max"], 
+            settings.settings["y_max"]
+            )
+        self.origin_x = self.x
+        self.origin_y = self.y
+
+        self.rect.center = [self.x, self.y]
+
+        self.d_food = 100   # distance to nearest food
+        self.r_food = 0     # orientation to nearest food
+        self.fitness = 0
+
+        self.finishedWork = 0
+
+       
 
     def set_color(self, surface, color):
         rect = surface.get_rect()
@@ -90,7 +118,9 @@ class Entity(pygame.sprite.Sprite):
 
     # draw
     def draw(self, screen):
-        a = self.set_color(self.scaledImage,[self.v * 25,0,155])
+        
+        a = self.set_color(self.scaledImage,velocity_to_rgb(self.v,settings.settings['v_min'], settings.settings['v_max']))
+        a = self.set_color(self.scaledImage,velocity_to_rgb(self.v,5, 20))
         screen.blit(a, self.rect)
 
     # iterates foods array and eat the one close enough
@@ -112,6 +142,13 @@ class Entity(pygame.sprite.Sprite):
         # remove all eaten food from the foods array
         for eaten_food in eaten_foods:
             foods.remove(eaten_food)
+
+    # mark back home flag if entity is home and have enough food
+    def try_mark_back_home(self):
+        home_org_dist = dist(self.x, self.y, self.origin_x, self.origin_y)
+        if home_org_dist <= 0.90 and self.fitness >= self.food_to_reproduce:
+            self.finishedWork = 1
+
     
     # calc rotation to closest food
     def calc_heading(self,foods):
@@ -129,7 +166,7 @@ class Entity(pygame.sprite.Sprite):
             self.r_food = heading(self, settings.settings['x_max']/2, settings.settings['y_max']/2 )
 
         #if you collected enough food -> go home
-        if(self.fitness >= 2):
+        if(self.fitness >= self.food_to_reproduce):
             self.r_food = heading(self, self.origin_x, self.origin_y)
 
     # UTILS
@@ -172,3 +209,14 @@ def is_inside_box(pos, x1,y1,x2,y2):
     if min_x <= pos.x <= max_x and min_y <= pos.y <= max_y:
         return True
     return False
+
+def velocity_to_rgb(velocity, min_velocity, max_velocity):
+    # Normalize velocity to range [0, 1]
+    normalized_velocity = (velocity - min_velocity) / (max_velocity - min_velocity)
+    print(normalized_velocity)
+    # Map normalized velocity to RGB color space
+    red = int(255 * normalized_velocity)
+    green = 0
+    blue = int(255 * (1 - normalized_velocity))
+    
+    return [red, green, blue]
