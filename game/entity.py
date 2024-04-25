@@ -17,8 +17,13 @@ class Entity(pygame.sprite.Sprite):
                                                            int(self.image.get_height() * scalingFactor)))
         self.rect = self.scaledImage.get_rect()
 
-        self.x = random.uniform(settings['x_min'], settings['x_max'])  # position (x)
-        self.y = random.uniform(settings['y_min'], settings['y_max'])  # position (y)
+        self.x,self.y = generate_pos_on_box_margins(
+            settings["x_min"], 
+            settings["y_min"], 
+            settings["x_max"], 
+            settings["y_max"]
+            )
+
         self.rect.center = [self.x, self.y]
 
         self.r = random.uniform(0,360)                 # orientation   [0, 360]
@@ -113,7 +118,6 @@ class Entity(pygame.sprite.Sprite):
                 self.d_food = food_org_dist
                 self.r_food = heading(self, food)
                 
-        
 
     # UTILS
 def dist(x1,y1,x2,y2):
@@ -126,5 +130,22 @@ def heading(pos, target):
     if abs(theta_d) > 180: theta_d += 360
     return theta_d / 180
 
-    
-    
+def generate_pos_on_box_margins(x1,y1,x2,y2):
+    x = 0
+    y = 0
+    if(random.randrange(0,10) % 2 ==0):
+        x = random.uniform(x1, x2)  # position (x)
+        #random up or both
+        if(random.randrange(0,10) % 2 ==0):
+                y = y1
+        else:
+                y = y2
+    else:
+        y = random.uniform(y1, y2)  # position (y)
+        #random left or right
+        if(random.randrange(0,10) % 2 ==0):
+            x = x1
+        else:
+            x = x2
+
+    return x,y
