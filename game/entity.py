@@ -23,6 +23,8 @@ class Entity(pygame.sprite.Sprite):
             settings["x_max"], 
             settings["y_max"]
             )
+        self.origin_x = self.x
+        self.origin_y = self.y
 
         self.rect.center = [self.x, self.y]
 
@@ -113,23 +115,22 @@ class Entity(pygame.sprite.Sprite):
     
     # calc rotation to closest food
     def calc_heading(self,foods):
+        #try to find food
         for food in foods:
             food_org_dist = dist(self.x, self.y, food.x, food.y)
             if food_org_dist < self.d_food:
                 self.d_food = food_org_dist
                 self.r_food = heading(self, food.x, food.y)
+
         #if no food detected and touch margins, orient to center of the screen
         if (self.d_food == self.d_food_max and 
-            not is_inside_box(self,
-                            settings.settings['x_min'],
-                            settings.settings['y_min'],
-                            settings.settings['x_max'],
-                            settings.settings['y_max'])) :
-            self.r_food = heading(self, 
-                                  settings.settings['x_max']/2, 
-                                  settings.settings['y_max']/2 
-                                  )
-                
+            not is_inside_box(self,settings.settings['x_min'],settings.settings['y_min'],settings.settings['x_max'],settings.settings['y_max'])) :
+            
+            self.r_food = heading(self, settings.settings['x_max']/2, settings.settings['y_max']/2 )
+
+        #if you collected enough food -> go home
+        if(self.fitness >= 2):
+            self.r_food = heading(self, self.origin_x, self.origin_y)
 
     # UTILS
 def dist(x1,y1,x2,y2):
