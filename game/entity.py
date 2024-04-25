@@ -80,17 +80,23 @@ class Entity(pygame.sprite.Sprite):
 
     # iterates foods array and eat the one close enough
     def try_eat(self, foods):
+        eaten_foods = []
         for food in foods:
                 food_org_dist = dist(self.x, self.y, food.x, food.y)
 
                 # if organism is close enough to the food -> eat it
                 if food_org_dist <= 0.90:
                     self.fitness += food.energy
-                    food.respawn(settings.settings)
+                    #food.respawn(settings.settings)
+                    eaten_foods.append(food)
 
                 # reset values so they will be calcualted again
                 self.d_food = 100
                 self.r_food = 0
+
+        # remove all eaten food from the foods array
+        for eaten_food in eaten_foods:
+            foods.remove(eaten_food)
     
     # calc rotation to closest food
     def calc_heading(self,foods):
@@ -99,6 +105,8 @@ class Entity(pygame.sprite.Sprite):
             if food_org_dist < self.d_food:
                 self.d_food = food_org_dist
                 self.r_food = heading(self, food)
+                
+        
 
     # UTILS
 def dist(x1,y1,x2,y2):

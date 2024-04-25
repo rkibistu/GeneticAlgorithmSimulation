@@ -140,7 +140,7 @@ def simulate(settings, organisms, foods, gen, screen):
 
         for org in organisms:
              org.update(foods)   
-             
+
         draw_game(settings,organisms,foods,gen,t_step, screen)
 
     return organisms
@@ -151,11 +151,6 @@ def main():
     clock = pygame.time.Clock()
 
     print(Entity.__dir__)
-
-    # spawn food
-    foods = []
-    for i in range(0,settings.settings['food_num']):
-        foods.append(Food(settings.settings))
 
     # dpawn organisms
     organisms = []
@@ -170,12 +165,15 @@ def main():
     # generations loop
     for gen in range(0, settings.settings['gens']):
 
+        # spawn food
+        foods = []
+        for i in range(0,settings.settings['food_num']):
+            foods.append(Food(settings.settings))
+
         organisms = simulate(settings.settings, organisms, foods, gen, screen)
 
         organisms, stats = evolve(settings.settings, organisms, gen)
         print('> GEN:',gen,'BEST:',stats['BEST'],'AVG:',stats['AVG'],'WORST:',stats['WORST'])
-        print('> WIH: ', stats['BEST-WIH'])
-        print('> WHO: ', stats['BEST-WHO'])
 
 if __name__ == "__main__":
     main()
