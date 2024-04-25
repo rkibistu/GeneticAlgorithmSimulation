@@ -30,6 +30,7 @@ class Entity(pygame.sprite.Sprite):
         self.v = random.uniform(0,settings['v_max'])   # velocity      [0, v_max]
         self.dv = random.uniform(-settings['dv_max'], settings['dv_max'])   # dv
 
+        self.d_food_max = 100 # max distance it can detects food
         self.d_food = 100   # distance to nearest food
         self.r_food = 0     # orientation to nearest food
         self.fitness = 0    # fitness (food count)
@@ -116,16 +117,27 @@ class Entity(pygame.sprite.Sprite):
             food_org_dist = dist(self.x, self.y, food.x, food.y)
             if food_org_dist < self.d_food:
                 self.d_food = food_org_dist
-                self.r_food = heading(self, food)
+                self.r_food = heading(self, food.x, food.y)
+        #if no food detected and touch margins, orient to center of the screen
+        if (self.d_food == self.d_food_max and 
+            not is_inside_box(self,
+                            settings.settings['x_min'],
+                            settings.settings['y_min'],
+                            settings.settings['x_max'],
+                            settings.settings['y_max'])) :
+            self.r_food = heading(self, 
+                                  settings.settings['x_max']/2, 
+                                  settings.settings['y_max']/2 
+                                  )
                 
 
     # UTILS
 def dist(x1,y1,x2,y2):
     return math.sqrt((x2-x1)**2 + (y2-y1)**2)
 
-def heading(pos, target):
-    d_x = target.x - pos.x
-    d_y = target.y - pos.y
+def heading(pos, target_x, target_y):
+    d_x = target_x - pos.x
+    d_y = target_y - pos.y
     theta_d = math.degrees(math.atan2(d_y, d_x)) - pos.r
     if abs(theta_d) > 180: theta_d += 360
     return theta_d / 180
@@ -149,3 +161,13 @@ def generate_pos_on_box_margins(x1,y1,x2,y2):
             x = x2
 
     return x,y
+
+def is_inside_box(pos, x1,y1,x2,y2):
+    min_x = min(x1,x2)
+    min_y = min(y1,y2)
+    max_x = max(x1,x2)
+    max_y = max(y1,y2)
+
+    if min_x <= pos.x <= max_x and min_y <= pos.y <= max_y:
+        return True
+    return False

@@ -25,3 +25,4 @@ settings['plot'] = True         # plot final generation?
 settings['inodes'] = 1          # number of input nodes
 settings['hnodes'] = 5          # number of hidden nodes
 settings['onodes'] = 2          # number of output nodes
+
