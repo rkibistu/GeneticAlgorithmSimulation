@@ -1,8 +1,11 @@
 from sprite import Sprite
 import random
-import math
 import numpy as np
 import pygame
+import math
+
+from food import Food
+import evolutionSettings as settings
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self, settings, wih=None, who=None, name=None):
@@ -56,7 +59,6 @@ class Entity(pygame.sprite.Sprite):
         if self.v < 0: self.v = 0
         if self.v > settings['v_max']: self.v = settings['v_max']
 
-
     # update position
     def update_pos(self, settings):
         dx = self.v * math.cos(math.radians(self.r)) * settings['dt']
@@ -65,6 +67,49 @@ class Entity(pygame.sprite.Sprite):
         self.y += dy
         self.rect.center = [self.x, self.y]
 
+    def update(self, foods):
+        self.try_eat(foods)
+        self.calc_heading(foods)
+        self.think()
+        self.update_r(settings.settings)
+        self.update_pos(settings.settings)
+
     # draw
     def draw(self, screen):
         screen.blit(self.scaledImage, self.rect)
+
+    # iterates foods array and eat the one close enough
+    def try_eat(self, foods):
+        for food in foods:
+                food_org_dist = dist(self.x, self.y, food.x, food.y)
+
+                # if organism is close enough to the food -> eat it
+                if food_org_dist <= 0.90:
+                    self.fitness += food.energy
+                    food.respawn(settings.settings)
+
+                # reset values so they will be calcualted again
+                self.d_food = 100
+                self.r_food = 0
+    
+    # calc rotation to closest food
+    def calc_heading(self,foods):
+        for food in foods:
+            food_org_dist = dist(self.x, self.y, food.x, food.y)
+            if food_org_dist < self.d_food:
+                self.d_food = food_org_dist
+                self.r_food = heading(self, food)
+
+    # UTILS
+def dist(x1,y1,x2,y2):
+    return math.sqrt((x2-x1)**2 + (y2-y1)**2)
+
+def heading(pos, target):
+    d_x = target.x - pos.x
+    d_y = target.y - pos.y
+    theta_d = math.degrees(math.atan2(d_y, d_x)) - pos.r
+    if abs(theta_d) > 180: theta_d += 360
+    return theta_d / 180
+
+    
+    

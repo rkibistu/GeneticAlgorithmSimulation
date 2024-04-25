@@ -138,40 +138,10 @@ def simulate(settings, organisms, foods, gen, screen):
 
         handle_events()
 
+        for org in organisms:
+             org.update(foods)   
+             
         draw_game(settings,organisms,foods,gen,t_step, screen)
-
-        # update fitness function
-        for food in foods:
-            for org in organisms:
-                food_org_dist = dist(org.x, org.y, food.x, food.y)
-
-                # if organism is close enough to the food -> eat it
-                if food_org_dist <= 0.75:
-                    org.fitness += food.energy
-                    food.respawn(settings)
-
-                # reset values so they will be calcualted again
-                org.d_food = 100
-                org.r_food = 0
-
-        # calcilate heading to closest food
-        for food in foods:
-            for org in organisms:
-
-                food_org_dist = dist(org.x, org.y, food.x, food.y)
-                if food_org_dist < org.d_food:
-                    org.d_food = food_org_dist
-                    org.r_food = calc_heading(org, food)
-
-        # update internal values using neuronal network
-        for org in organisms:
-            org.think()
-
-        # update position and velocity
-        for org in organisms:
-            org.update_r(settings)
-            org.update_vel(settings)
-            org.update_pos(settings)
 
     return organisms
 
