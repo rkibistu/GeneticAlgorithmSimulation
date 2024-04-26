@@ -119,8 +119,8 @@ class Entity(pygame.sprite.Sprite):
     # draw
     def draw(self, screen):
         
-        a = self.set_color(self.scaledImage,velocity_to_rgb(self.v,settings.settings['v_min'], settings.settings['v_max']))
-        a = self.set_color(self.scaledImage,velocity_to_rgb(self.v,5, 20))
+        a = self.set_color(self.scaledImage,
+                           velocity_to_rgb(self.v,settings.settings['v_min_color'], settings.settings['v_max_color']))
         screen.blit(a, self.rect)
 
     # iterates foods array and eat the one close enough
