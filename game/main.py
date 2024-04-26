@@ -13,8 +13,10 @@ import operator
 import sys
 
 
+
 from entity import Entity
 from food import Food
+from plotUtils import plot_all
 import evolutionSettings as settings
 
 WIDTH = 1280
@@ -33,16 +35,6 @@ GOOD_WHO = [
     [0.66994817, -0.55868148, 0.24482176, 0.4597497, 0.31503457],
     [0.16009314, -0.08497293, -0.60829999, -0.69862888, -0.13360536]
 ]
-
-def dist(x1,y1,x2,y2):
-    return sqrt((x2-x1)**2 + (y2-y1)**2)
-
-def calc_heading(org, food):
-    d_x = food.x - org.x
-    d_y = food.y - org.y
-    theta_d = degrees(atan2(d_y, d_x)) - org.r
-    if abs(theta_d) > 180: theta_d += 360
-    return theta_d / 180
 
 def draw_game(settings, organisms, foods, gen, time, screen):
 
@@ -183,6 +175,9 @@ def simulate(settings, organisms, foods, gen, screen):
 
     return organisms
 
+
+
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -214,6 +209,8 @@ def main():
         organisms, stats = evolve_v2(settings.settings, organisms, gen)
         print('> GEN: ',gen,'POP_SIZE:',stats['POP_NO'],'V_MIN:',stats['V_MIN'], 'V_MAX:',stats['V_MAX'], 'V_AVG:',stats['V_AVG'])
         #print('> GEN:',gen,'BEST:',stats['BEST'],'AVG:',stats['AVG'],'WORST:',stats['WORST'])
+
+        plot_all(gen,organisms,stats)
 
 if __name__ == "__main__":
     main()
