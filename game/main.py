@@ -126,31 +126,50 @@ def evolve_v2(settings, organisms_old, gen):
     stats['V_MAX'] = 0
     stats['V_AVG'] = 0
     stats['POP_NO'] = 0
+    stats['SENSE_MIN'] = 1000
+    stats['SENSE_MAX'] = 0
+    stats['SENSE_AVG'] = 0
 
     v_sum = 0
+    sense_sum = 0
     for org in organisms_old:
         if(org.fitness >= org.food_to_live):
             organisms_new.append(Entity(settings, wih=org.wih, who=org.who, name=org.name, velocity=org.v))
         if(org.finishedWork == 1):
             newVelocity = org.v
-            if(random.randrange(0,100) < 20):
+            newSenseDist = org.d_food_max
+            if(random.randrange(0,100) < 50):
                 if(random.randrange(0,100) % 2 == 0):
-                   newVelocity += 1
+                    #mutate sense
+                    if(random.randrange(0,100) % 2 == 0):
+                        newSenseDist += 20
+                    else:
+                        newSenseDist -= 20
                 else:
-                    newVelocity -= 1
-            organisms_new.append(Entity(settings, wih=org.wih, who=org.who, name=org.name, velocity=newVelocity))
+                    #mutate speed
+                    if(random.randrange(0,100) % 2 == 0):
+                        newVelocity += 1
+                    else:
+                        newVelocity -= 1
+            organisms_new.append(Entity(settings, wih=org.wih, who=org.who, name=org.name, velocity=newVelocity, sense=newSenseDist))
 
         #STATS
         v_sum += org.v
+        sense_sum += org.d_food_max
         if(org.v < stats['V_MIN']):
             stats['V_MIN'] = org.v
         if(org.v > stats['V_MAX']):
             stats['V_MAX'] = org.v
+        if(org.d_food_max < stats['SENSE_MIN']):
+            stats['SENSE_MIN'] = org.d_food_max
+        if(org.d_food_max > stats['SENSE_MAX']):
+            stats['SENSE_MAX'] = org.d_food_max
 
         org.reset()
 
     stats['POP_NO'] = len(organisms_old)
     stats['V_AVG'] = (v_sum)/stats['POP_NO']
+    stats['SENSE_AVG'] = (sense_sum)/stats['POP_NO']
     return organisms_new, stats
 
 def handle_events():
@@ -196,21 +215,30 @@ def main():
         organisms.append(Entity(settings.settings, wih_init, who_init, name='gen[x]-org['+str(i)+']'))
 
     # generations loop
+    food_quantity = settings.settings['food_num']
     for gen in range(0, settings.settings['gens']):
 
         # spawn food
         foods = []
-        for i in range(0,settings.settings['food_num']):
+        for i in range(0,food_quantity):
             foods.append(Food(settings.settings))
+        food_quantity -= 1
+        if(food_quantity < 10):
+            food_quantity = 10
 
         organisms = simulate(settings.settings, organisms, foods, gen, screen)
 
         # organisms, stats = evolve(settings.settings, organisms, gen)
         organisms, stats = evolve_v2(settings.settings, organisms, gen)
-        print('> GEN: ',gen,'POP_SIZE:',stats['POP_NO'],'V_MIN:',stats['V_MIN'], 'V_MAX:',stats['V_MAX'], 'V_AVG:',stats['V_AVG'])
+        print('> GEN: ',gen,'POP_SIZE:',stats['POP_NO'],
+              'V_MIN:',stats['V_MIN'], 'V_MAX:',stats['V_MAX'], 'V_AVG:',stats['V_AVG'],
+              'SENSE_MIN:',stats['SENSE_MIN'], 'SENSE_MAX:',stats['SENSE_MAX'], 'SENSE_AVG:',stats['SENSE_AVG'])
         #print('> GEN:',gen,'BEST:',stats['BEST'],'AVG:',stats['AVG'],'WORST:',stats['WORST'])
 
         plot_all(gen,organisms,stats)
+
+    while True:
+        pass
 
 if __name__ == "__main__":
     main()

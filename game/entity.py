@@ -8,7 +8,7 @@ from food import Food
 import evolutionSettings as settings
 
 class Entity(pygame.sprite.Sprite):
-    def __init__(self, settings, wih=None, who=None, name=None, velocity=None):
+    def __init__(self, settings, wih=None, who=None, name=None, velocity=None, sense=None):
         super().__init__()
 
         self.image = pygame.image.load("Sprites/triangle.png")
@@ -29,14 +29,19 @@ class Entity(pygame.sprite.Sprite):
         self.rect.center = [self.x, self.y]
 
         self.r = random.uniform(0,360)                 # orientation   [0, 360]
+
+        #velocity
         if(velocity == None):
             self.v = random.uniform(settings['v_min'],settings['v_max'])   # velocity      [0, v_max]
         else:
             self.v = velocity
         self.dv = random.uniform(-settings['dv_max'], settings['dv_max'])   # dv
 
-        self.d_food_max = 100 # max distance it can detects food
-        self.d_food = 100   # distance to nearest food
+        if(sense == None):
+            self.d_food_max = random.uniform(settings['sense_min'],settings['sense_max']) # max distance it can detects food
+        else:
+            self.d_food_max = sense
+        self.d_food = self.d_food_max   # distance to nearest food
         self.r_food = 0     # orientation to nearest food
         self.fitness = 0    # fitness (food count)
 
@@ -102,7 +107,7 @@ class Entity(pygame.sprite.Sprite):
 
         self.rect.center = [self.x, self.y]
 
-        self.d_food = 100   # distance to nearest food
+        self.d_food = self.d_food_max   # distance to nearest food
         self.r_food = 0     # orientation to nearest food
         self.fitness = 0
 
@@ -136,7 +141,7 @@ class Entity(pygame.sprite.Sprite):
                     eaten_foods.append(food)
 
                 # reset values so they will be calcualted again
-                self.d_food = 100
+                self.d_food = self.d_food_max
                 self.r_food = 0
 
         # remove all eaten food from the foods array
@@ -162,7 +167,6 @@ class Entity(pygame.sprite.Sprite):
         #if no food detected and touch margins, orient to center of the screen
         if (self.d_food == self.d_food_max and 
             not is_inside_box(self,settings.settings['x_min'],settings.settings['y_min'],settings.settings['x_max'],settings.settings['y_max'])) :
-            
             self.r_food = heading(self, settings.settings['x_max']/2, settings.settings['y_max']/2 )
 
         #if you collected enough food -> go home
