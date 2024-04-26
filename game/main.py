@@ -125,19 +125,40 @@ def evolve(settings, organisms_old, gen):
 
 # no food -> die
 # food, no home -> live
-# 2 food and home -> reproduce
-def evolve_v1(settings, organisms_old, gen):
+# enough food and home -> reproduce = dublicate + mutation
+def evolve_v2(settings, organisms_old, gen):
     organisms_new = []
     stats = defaultdict(int)
 
+    stats['V_MIN'] = 100
+    stats['V_MAX'] = 0
+    stats['V_AVG'] = 0
+    stats['POP_NO'] = 0
+
+    v_sum = 0
     for org in organisms_old:
         if(org.fitness >= org.food_to_live):
             organisms_new.append(Entity(settings, wih=org.wih, who=org.who, name=org.name, velocity=org.v))
         if(org.finishedWork == 1):
-            organisms_new.append(Entity(settings, wih=org.wih, who=org.who, name=org.name, velocity=org.v))
+            newVelocity = org.v
+            if(random.randrange(0,100) < 20):
+                if(random.randrange(0,100) % 2 == 0):
+                   newVelocity += 1
+                else:
+                    newVelocity -= 1
+            organisms_new.append(Entity(settings, wih=org.wih, who=org.who, name=org.name, velocity=newVelocity))
+
+        #STATS
+        v_sum += org.v
+        if(org.v < stats['V_MIN']):
+            stats['V_MIN'] = org.v
+        if(org.v > stats['V_MAX']):
+            stats['V_MAX'] = org.v
+
         org.reset()
 
-    print(len(organisms_new))
+    stats['POP_NO'] = len(organisms_old)
+    stats['V_AVG'] = (v_sum)/stats['POP_NO']
     return organisms_new, stats
 
 def handle_events():
@@ -190,7 +211,8 @@ def main():
         organisms = simulate(settings.settings, organisms, foods, gen, screen)
 
         # organisms, stats = evolve(settings.settings, organisms, gen)
-        organisms, stats = evolve_v1(settings.settings, organisms, gen)
+        organisms, stats = evolve_v2(settings.settings, organisms, gen)
+        print('> GEN: ',gen,'POP_SIZE:',stats['POP_NO'],'V_MIN:',stats['V_MIN'], 'V_MAX:',stats['V_MAX'], 'V_AVG:',stats['V_AVG'])
         #print('> GEN:',gen,'BEST:',stats['BEST'],'AVG:',stats['AVG'],'WORST:',stats['WORST'])
 
 if __name__ == "__main__":

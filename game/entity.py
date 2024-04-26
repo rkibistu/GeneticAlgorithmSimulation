@@ -213,7 +213,6 @@ def is_inside_box(pos, x1,y1,x2,y2):
 def velocity_to_rgb(velocity, min_velocity, max_velocity):
     # Normalize velocity to range [0, 1]
     normalized_velocity = (velocity - min_velocity) / (max_velocity - min_velocity)
-    print(normalized_velocity)
     # Map normalized velocity to RGB color space
     red = int(255 * normalized_velocity)
     green = 0

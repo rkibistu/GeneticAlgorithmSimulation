@@ -11,10 +11,10 @@ settings['mutate'] = 0.10       # mutation rate
 settings['gen_time'] = 100      # generation length         (seconds)
 settings['dt'] = 0.04           # simulation time step      (dt)
 settings['dr_max'] = 720        # max rotational speed      (degrees per second)
-settings['v_max'] = 8.0         # max velocity              (units per second)
-settings['v_min'] = 7.99        # min velocity              (units per second)
+settings['v_max'] = 8.01        # max velocity              (units per second)
+settings['v_min'] = 8.00        # min velocity              (units per second)
 settings['v_max_color'] = 20.0  # the max value used to get the color based on velcoity
-settings['v_min_color'] = 4.0  # the min value used to get the color based on velcoity
+settings['v_min_color'] = 2.0   # the min value used to get the color based on velcoity
 settings['dv_max'] =  2         # max acceleration (+/-)    (units per second^2)
 
 settings['x_min'] = 10.0        # arena western border
