@@ -115,24 +115,41 @@ def evolve(settings, organisms_old, gen):
 
     return organisms_new, stats
 
+# returns the mutated organism and a flag (1 - mutated, 0 - no mutation)
 def mutate(org):
+    didMutate = 0
     newVelocity = org.v
     newSenseDist = org.d_food_max
     if(random.randrange(0,100) < 50):
+        didMutate = 1
         if(random.randrange(0,100) % 2 == 0):
             #mutate sense
             if(random.randrange(0,100) % 2 == 0):
                 newSenseDist += 20
             else:
                 newSenseDist -= 20
+        # else:
+        #mutate speed
+        if(random.randrange(0,100) % 2 == 0):
+            newVelocity += 1
         else:
-            #mutate speed
-            if(random.randrange(0,100) % 2 == 0):
-                newVelocity += 1
-            else:
-                newVelocity -= 1
-    return Entity(settings.settings, wih=org.wih, who=org.who, name=org.name, velocity=newVelocity, sense=newSenseDist)
+            newVelocity -= 1
+                
+    org.v = newVelocity
+    #org.d_food_max = newSenseDist
+    return org, didMutate
 
+# gets 2 parents and returns 2 new organisms
+def crossover(parent_1, parent_2):  
+    crossover_weight = random.random()
+    velocity_new1 = (crossover_weight * parent_1.v) + ((1 - crossover_weight) * parent_2.v)
+    velocity_new2 = (crossover_weight * parent_2.v) + ((1 - crossover_weight) * parent_1.v)
+
+    org_1 = Entity(settings=settings.settings,wih=parent_1.wih,who=parent_1.who,velocity=velocity_new1,sense=parent_1.d_food_max)
+    org_2 = Entity(settings=settings.settings,wih=parent_1.wih,who=parent_1.who,velocity=velocity_new2,sense=parent_2.d_food_max)
+
+    return org_1, org_2
+    
 # no food -> die
 # food, no home -> live
 # enough food and home -> reproduce = dublicate + mutation
@@ -147,46 +164,58 @@ def evolve_v2(settings, organisms_old, gen):
     stats['SENSE_MIN'] = 1000
     stats['SENSE_MAX'] = 0
     stats['SENSE_AVG'] = 0
-
-    organisms_alive = 0
-    for org in organisms_old:
-        if(org.fitness >= org.food_to_live):
-            organisms_alive += 1
+    stats['ELITISTS_NO'] = 0
+    stats['ALIVE_NO'] = 0
+    stats['DEAD_NO'] = 0
+    stats['MUTATED_NO'] = 0
 
     # TODO: preserve the ones who just lived. preserve the elitism. And reproduce from elitism suing crossover, but creates onl 1 new organism
-
-    # elitism (all that collected 2 food and arivved home)
-    orgs_sorted = sorted(organisms_old, key=operator.attrgetter('finishedWork'), reverse=True)
-    organisms_new = []
-    elitism_number = 0
-    elitism_organisms = []
-    for org in orgs_sorted:
-        if(org.finishedWork == 0):
-            break
-        elitism_number += 1
-        elitism_organisms.append(Entity(settings, wih=org.wih, who=org.who, name=org.name, velocity=org.v, sense=org.d_food_max))
-
-    crossover_number = int((organisms_alive - elitism_number)/2)
-    for i in range(0,crossover_number):
-        # select candidates
-        canidates = range(0, elitism_number - 1)
-        random_index = random.sample(canidates, 2)
-        org_1 = elitism_organisms[random_index[0]]
-        org_2 = elitism_organisms[random_index[1]]
-
-        # crossover
-        crossover_weight = random.random()
-        velocity_new1 = (crossover_weight * org_1.v) + ((1 - crossover_weight) * org_2.v)
-        velocity_new2 = (crossover_weight * org_2.v) + ((1 - crossover_weight) * org_1.v)
+    
+    # Preserve the ones who found enough food to live
+    # Preserve the ones who found enough food and got home (ELITISM)
+    organisms_alive = []
+    organisms_elite = []
+    for org in organisms_old:
+        if(org.fitness >= org.food_to_live and org.finishedWork == 0):
+            organisms_alive.append(org)
+            stats['ALIVE_NO'] += 1
+        if(org.finishedWork == 1):
+            organisms_elite.append(org)
+            stats['ELITISTS_NO'] += 1
+    stats['DEAD_NO'] = len(organisms_old) - stats['ALIVE_NO'] - stats['ELITISTS_NO']
+    
+    # Every elite organisms reproduces himself
+    # We simulate this by doing a number of crossovers between random elitist entities
+    #   the number is equal with the number of elitist enitites
+    organisms_crossover = []
+    if(len(organisms_elite) >= 2):
+        for org in organisms_elite:
+            #choose 2 parents
+            
+            canidates = range(0, len(organisms_elite))
+            random_index = random.sample(canidates, 2)
+            parent_1 = organisms_elite[random_index[0]]
+            parent_2 = organisms_elite[random_index[1]]
+            
+            #crossover algorithm
+            org_1, org_2 = crossover(parent_1, parent_2)
         
-        org_1.v = velocity_new1
-        org_2.v = velocity_new2
-        newOrg1 = mutate(org_1)
-        newOrg2 = mutate(org_2)
+            # choose only one
+            choosen_one = org_1
+            if(random.randrange(1,100) < 50):
+                choosen_one = org_2
+            # mutate
+            choosen_one, didMutate = mutate(choosen_one)
+            if (didMutate == 1):
+                stats['MUTATED_NO'] += 1
 
-        organisms_new.append(newOrg1)
-        organisms_new.append(newOrg2)
-    organisms_new += elitism_organisms
+            organisms_crossover.append(choosen_one)
+    elif(len(organisms_elite) == 1):
+        organisms_crossover.append(organisms_elite[0])
+        
+    organisms_new += organisms_alive
+    organisms_new += organisms_elite
+    organisms_new += organisms_crossover
 
     v_sum = 0
     sense_sum = 0
@@ -272,7 +301,7 @@ def main():
     # a,b = concatenate_replace_and_split(num1, num2, x, replacement)
     # print("a:", a, "  b:",b)
     # exit(1)
-
+    
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
