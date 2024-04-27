@@ -128,15 +128,15 @@ def mutate(org):
                 newSenseDist += 20
             else:
                 newSenseDist -= 20
-        # else:
-        #mutate speed
-        if(random.randrange(0,100) % 2 == 0):
-            newVelocity += 1
         else:
-            newVelocity -= 1
+            #mutate speed
+            if(random.randrange(0,100) % 2 == 0):
+                newVelocity += 1
+            else:
+                newVelocity -= 1
                 
     org.v = newVelocity
-    #org.d_food_max = newSenseDist
+    org.d_food_max = newSenseDist
     return org, didMutate
 
 # gets 2 parents and returns 2 new organisms
@@ -144,9 +144,12 @@ def crossover(parent_1, parent_2):
     crossover_weight = random.random()
     velocity_new1 = (crossover_weight * parent_1.v) + ((1 - crossover_weight) * parent_2.v)
     velocity_new2 = (crossover_weight * parent_2.v) + ((1 - crossover_weight) * parent_1.v)
+    
+    sense_new1 = (crossover_weight * parent_2.d_food_max) + ((1 - crossover_weight) * parent_1.d_food_max)
+    sense_new2 = (crossover_weight * parent_1.d_food_max) + ((1 - crossover_weight) * parent_2.d_food_max)
 
-    org_1 = Entity(settings=settings.settings,wih=parent_1.wih,who=parent_1.who,velocity=velocity_new1,sense=parent_1.d_food_max)
-    org_2 = Entity(settings=settings.settings,wih=parent_1.wih,who=parent_1.who,velocity=velocity_new2,sense=parent_2.d_food_max)
+    org_1 = Entity(settings=settings.settings,wih=parent_1.wih,who=parent_1.who,velocity=velocity_new1,sense=sense_new1)
+    org_2 = Entity(settings=settings.settings,wih=parent_1.wih,who=parent_1.who,velocity=velocity_new2,sense=sense_new2)
 
     return org_1, org_2
     
