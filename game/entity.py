@@ -124,8 +124,10 @@ class Entity(pygame.sprite.Sprite):
     # draw
     def draw(self, screen):
         
+        #we substract and add one because we don't want to have divide by 0 cases
+        # and the diffrence in color is insignifiant
         a = self.set_color(self.scaledImage,
-                           velocity_to_rgb(self.v,settings.settings['v_min_color'], settings.settings['v_max_color']))
+                           velocity_to_rgb(self.v,settings.settings['v_min_alltime'] - 1, settings.settings['v_max_alltime'] + 1))
         screen.blit(a, self.rect)
 
     # iterates foods array and eat the one close enough

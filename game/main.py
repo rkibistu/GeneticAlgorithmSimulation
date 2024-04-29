@@ -18,6 +18,7 @@ from entity import Entity
 from food import Food
 from plotUtils import plot_all
 import evolutionSettings as settings
+from crossoverUtils import crossover_binary, crossover
 
 WIDTH = 1280
 HEIGHT = 720
@@ -138,20 +139,6 @@ def mutate(org):
     org.v = newVelocity
     org.d_food_max = newSenseDist
     return org, didMutate
-
-# gets 2 parents and returns 2 new organisms
-def crossover(parent_1, parent_2):  
-    crossover_weight = random.random()
-    velocity_new1 = (crossover_weight * parent_1.v) + ((1 - crossover_weight) * parent_2.v)
-    velocity_new2 = (crossover_weight * parent_2.v) + ((1 - crossover_weight) * parent_1.v)
-    
-    sense_new1 = (crossover_weight * parent_2.d_food_max) + ((1 - crossover_weight) * parent_1.d_food_max)
-    sense_new2 = (crossover_weight * parent_1.d_food_max) + ((1 - crossover_weight) * parent_2.d_food_max)
-
-    org_1 = Entity(settings=settings.settings,wih=parent_1.wih,who=parent_1.who,velocity=velocity_new1,sense=sense_new1)
-    org_2 = Entity(settings=settings.settings,wih=parent_1.wih,who=parent_1.who,velocity=velocity_new2,sense=sense_new2)
-
-    return org_1, org_2
     
 # no food -> die
 # food, no home -> live
@@ -212,6 +199,12 @@ def evolve_v2(settings, organisms_old, gen):
             if (didMutate == 1):
                 stats['MUTATED_NO'] += 1
 
+            #keep velocity inside desired interval
+            if(choosen_one.v > settings['v_max_alltime']):
+                choosen_one.v = settings['v_max_alltime']
+            if(choosen_one.v < settings['v_min_alltime']):
+                choosen_one.v = settings['v_min_alltime']
+                
             organisms_crossover.append(choosen_one)
     elif(len(organisms_elite) == 1):
         organisms_crossover.append(organisms_elite[0])
@@ -266,45 +259,9 @@ def simulate(settings, organisms, foods, gen, screen):
     return organisms
 
 
-def concatenate_replace_and_split(num1, num2, x, replacement):
-    # Convert numbers to binary strings
-    binary1 = bin(num1)[2:]
-    binary2 = bin(num2)[2:]
 
-    # Concatenate binary strings
-    concatenated = binary1 + binary2
-    print(binary1)
-    print(binary2)
-    print(concatenated)
-
-    # Replace first x bits with replacement
-    modified = replacement + concatenated[x:]
-
-    # Split modified bits into two parts
-    split_index = len(binary1)
-    modified_part1 = modified[:split_index]
-    modified_part2 = modified[split_index:]
-
-    print(modified_part1)
-    print(modified_part2)
-
-    # Convert modified binary strings back to integers
-    new_num1 = int(modified_part1, 2)
-    new_num2 = int(modified_part2, 2)
-
-    return new_num1, new_num2
 
 def main():
-
-    # num1 = 5
-    # num2 = 10
-    # x = 4
-    # replacement = '1100'  # Replace first x bits with this value
-
-    # a,b = concatenate_replace_and_split(num1, num2, x, replacement)
-    # print("a:", a, "  b:",b)
-    # exit(1)
-    
     pygame.init()
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
@@ -329,9 +286,9 @@ def main():
         foods = []
         for i in range(0,food_quantity):
             foods.append(Food(settings.settings))
-        food_quantity -= 1
-        if(food_quantity < 10):
-            food_quantity = 10
+        # food_quantity -= 1
+        # if(food_quantity < 10):
+        #     food_quantity = 10
 
         organisms = simulate(settings.settings, organisms, foods, gen, screen)
 
