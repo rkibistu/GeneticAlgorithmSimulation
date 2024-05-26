@@ -1,11 +1,15 @@
 settings = {}
 
+# high food initially; -10 daily
+
 # EVOLUTION SETTINGS
 settings['pop_size'] = 100      # number of organisms
-settings['food_num'] = 50       # number of food particles
+settings['food_num'] = 300       # number of food particles
 settings['gens'] = 500           # number of generations
-settings['elitism'] = 0.20      # elitism (selection bias)
-settings['mutate'] = 0.10       # mutation rate
+settings['elitism'] = 0.20      # elitism (selection bias) - old, don-t sued anymore
+settings['mutate'] = 0.20       # mutation rate
+
+settings['food_modify'] = -10
 
 # SIMULATION SETTINGS
 settings['gen_time'] = 100          # generation length         (seconds)
@@ -13,8 +17,8 @@ settings['dt'] = 0.04               # simulation time step      (dt)
 settings['dr_max'] = 720            # max rotational speed      (degrees per second)
 settings['v_max'] = 8.01            # max velocity at spawn             (units per second)
 settings['v_min'] = 8.00            # min velocity at spawn             (units per second)
-settings['v_max_alltime'] = 50.0      # range used to map velocity to color
-settings['v_min_alltime'] = 1.0       
+settings['v_max_alltime'] = 999.0   # range used to map velocity to color - importatnonly for color of the entitity
+settings['v_min_alltime'] = 0.01       
 settings['dv_max'] =  2             # max acceleration (+/-)    (units per second^2)
 settings['sense_min'] = 50          # min value of distance to see food around
 settings['sense_max'] = 50.01       # max value of distance to see food around

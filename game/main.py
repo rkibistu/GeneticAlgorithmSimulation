@@ -16,7 +16,7 @@ import sys
 
 from entity import Entity
 from food import Food
-from plotUtils import plot_all
+from plotUtils import plot_all, ActivateSaving
 import evolutionSettings as settings
 from crossoverUtils import crossover_binary, crossover
 
@@ -121,7 +121,9 @@ def mutate(org):
     didMutate = 0
     newVelocity = org.v
     newSenseDist = org.d_food_max
-    if(random.randrange(0,100) < 50):
+    
+    mutate = random.random()
+    if mutate <= settings.settings['mutate']:
         didMutate = 1
         if(random.randrange(0,100) % 2 == 0):
             #mutate sense
@@ -259,7 +261,7 @@ def simulate(settings, organisms, foods, gen, screen):
     return organisms
 
 
-
+args = sys.argv
 
 def main():
     pygame.init()
@@ -267,6 +269,12 @@ def main():
     clock = pygame.time.Clock()
 
     print(Entity.__dir__)
+    
+    if(args[1] == '--save'):
+        force_recreate = False
+        if(args[3] == '--force-recreate'):
+            force_recreate  =True
+        ActivateSaving(args[2],force_recreate)
 
     # dpawn organisms
     organisms = []
@@ -286,9 +294,13 @@ def main():
         foods = []
         for i in range(0,food_quantity):
             foods.append(Food(settings.settings))
-        # food_quantity -= 1
-        # if(food_quantity < 10):
-        #     food_quantity = 10
+            
+        
+        food_quantity += settings.settings['food_modify']
+        if(food_quantity < 10):
+            food_quantity = 10
+        if(food_quantity > 200):
+            food_quantity = 200
 
         organisms = simulate(settings.settings, organisms, foods, gen, screen)
 
